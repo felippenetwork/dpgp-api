@@ -4,12 +4,12 @@ const { createClient } = require('@supabase/supabase-js');
 
 // ── Supabase ──────────────────────────────────────────────────────────────────
 let _db = null;
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://lymlhjycpjstkcmumbka.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5bWxoanljcGpzdGtjbXVtYmthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MzMyNTIsImV4cCI6MjA5NzIwOTI1Mn0.HxgcRhD5nlVYGxZNZmrMxfYCbQ0TXUB-YhvSBn8-poM';
+
 function getDB() {
   if (_db) return _db;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_KEY;
-  if (!url || !key) throw new Error('SUPABASE_URL e SUPABASE_KEY são obrigatórios');
-  _db = createClient(url, key);
+  _db = createClient(SUPABASE_URL, SUPABASE_KEY);
   return _db;
 }
 
