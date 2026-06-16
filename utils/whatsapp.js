@@ -85,17 +85,27 @@ async function initWA() {
         if (!msg.message) continue;
 
         const cfg = getConfig();
-        if (!cfg.ausenciaAtivo || !cfg.ausenciaMensagem?.trim()) continue;
+        if (!cfg.ausenciaAtivo) continue;
+
+        // suporta array novo e campo antigo (string)
+        const msgs = Array.isArray(cfg.ausenciaMensagens) && cfg.ausenciaMensagens.length
+          ? cfg.ausenciaMensagens
+          : (cfg.ausenciaMensagem ? [cfg.ausenciaMensagem] : []);
+        if (!msgs.length) continue;
 
         // cooldown: 1 resposta por contato por hora
         const ultimo = ausenciaCooldown.get(jid) || 0;
         if (Date.now() - ultimo < COOLDOWN_MS) continue;
         ausenciaCooldown.set(jid, Date.now());
 
+        // sorteia uma mensagem aleatória
+        const texto = msgs[Math.floor(Math.random() * msgs.length)].trim();
+        const delayMs = (cfg.ausenciaDelay || 25) * 1000;
+
         try {
-          await new Promise(r => setTimeout(r, 1500 + Math.random() * 2000));
-          await sock.sendMessage(jid, { text: cfg.ausenciaMensagem.trim() });
-          console.log(`[AUSÊNCIA] Auto-reply enviado para ${jid}`);
+          await new Promise(r => setTimeout(r, delayMs));
+          await sock.sendMessage(jid, { text: texto });
+          console.log(`[AUSÊNCIA] Auto-reply enviado para ${jid} (delay: ${cfg.ausenciaDelay || 25}s, msg ${msgs.indexOf(texto) + 1}/${msgs.length})`);
         } catch (err) {
           console.error('[AUSÊNCIA] Erro ao enviar:', err.message);
         }
