@@ -1,0 +1,18 @@
+{
+  "name": "dpgp-api",
+  "version": "1.0.0",
+  "description": "API Server DPGP — WhatsApp Bot + REST API para o site",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.23",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "pino": "^8.15.0",
+    "qrcode": "^1.5.3"
+  }
+}
