@@ -11,7 +11,7 @@ const PORT    = process.env.SERVER_PORT || process.env.PORT || 3001;
 const API_KEY = process.env.API_KEY || 'dpgp-secret-key';
 
 // ── Garante diretórios ──
-['data', 'auth_info'].forEach(d => {
+['data', 'auth_info', 'uploads'].forEach(d => {
   const p = path.join(__dirname, d);
   if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
 });
@@ -32,8 +32,12 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+// ── Arquivos de mídia enviados ──
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // ── Rotas ──
 app.use('/api',          require('./routes/status'));
+app.use('/api/upload',   require('./routes/upload'));
 app.use('/api/sync',     require('./routes/sync'));
 app.use('/api/history',  require('./routes/history'));
 app.use('/api/dispatch', require('./routes/dispatch'));
