@@ -18,6 +18,7 @@ const API_KEY = process.env.API_KEY || 'dpgp-secret-key';
 
 // ── Middleware ──
 app.use(cors({ origin: '*' }));
+app.options('*', cors()); // trata preflight CORS explicitamente
 app.use(express.json({ limit: '50mb' }));
 
 // ── Auth middleware ──
@@ -25,6 +26,7 @@ app.use(express.json({ limit: '50mb' }));
 const PUBLIC_PATHS = ['/status', '/qr'];
 app.use('/api', (req, res, next) => {
   if (PUBLIC_PATHS.includes(req.path)) return next();
+  if (req.method === 'OPTIONS') return next(); // permite preflight CORS
   const key = req.headers['x-api-key'];
   if (key !== API_KEY) {
     return res.status(401).json({ success: false, error: 'API Key inválida' });
