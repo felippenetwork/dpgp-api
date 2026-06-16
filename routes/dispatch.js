@@ -14,11 +14,11 @@ router.post('/trigger', async (req, res) => {
 });
 
 // POST /api/dispatch/toggle — ativa/desativa automação
-router.post('/toggle', (req, res) => {
+router.post('/toggle', async (req, res) => {
   try {
-    const cfg  = getConfig();
+    const cfg  = await getConfig();
     const novo = !cfg.ativo;
-    saveConfig({ ...cfg, ativo: novo });
+    await saveConfig({ ...cfg, ativo: novo });
     res.json({ success: true, ativo: novo });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -26,9 +26,9 @@ router.post('/toggle', (req, res) => {
 });
 
 // GET /api/dispatch/state — estado atual do scheduler
-router.get('/state', (req, res) => {
+router.get('/state', async (req, res) => {
   try {
-    const cfg   = getConfig();
+    const cfg   = await getConfig();
     const state = getScheduleState();
     res.json({ success: true, config: cfg, state });
   } catch (err) {

@@ -8,24 +8,22 @@ const {
 
 // POST /api/sync — site envia toda a configuração para o servidor
 // Body: { templates: [...], groups: [...], config: {...} }
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { templates, groups, config } = req.body;
     const result = { synced: {} };
 
     if (Array.isArray(templates)) {
-      saveTemplates(templates);
+      await saveTemplates(templates);
       result.synced.templates = templates.length;
     }
-
     if (Array.isArray(groups)) {
-      saveGroups(groups);
+      await saveGroups(groups);
       result.synced.groups = groups.length;
     }
-
     if (config && typeof config === 'object') {
-      const existing = getConfig();
-      saveConfig({ ...existing, ...config });
+      const existing = await getConfig();
+      await saveConfig({ ...existing, ...config });
       result.synced.config = true;
     }
 
@@ -38,14 +36,10 @@ router.post('/', (req, res) => {
 });
 
 // GET /api/sync — site puxa o estado atual do servidor
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    res.json({
-      success:   true,
-      templates: getTemplates(),
-      groups:    getGroups(),
-      config:    getConfig(),
-    });
+    const [templates, groups, config] = await Promise.all([getTemplates(), getGroups(), getConfig()]);
+    res.json({ success: true, templates, groups, config });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

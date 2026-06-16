@@ -83,11 +83,11 @@ async function verificarDisparo() {
   }
 
   try {
-    const config = storage.getConfig();
+    const config = await storage.getConfig();
     if (!config.ativo) return;
 
-    const grupos    = storage.getGroups().filter(g => g.active);
-    const templates = storage.getTemplates().filter(t => t.active);
+    const grupos    = (await storage.getGroups()).filter(g => g.active);
+    const templates = (await storage.getTemplates()).filter(t => t.active);
 
     if (!grupos.length || !templates.length) return;
 
@@ -131,9 +131,7 @@ async function verificarDisparo() {
 
       // Remove grupos forbidden automaticamente
       if (forbiddenGrupos.length > 0) {
-        const ids = new Set(forbiddenGrupos.map(g => g.id));
-        const lista = storage.getGroups().map(g => ids.has(g.id) ? { ...g, active: false } : g);
-        storage.saveGroups(lista);
+        await Promise.all(forbiddenGrupos.map(g => storage.updateGroup(g.id, { active: false }).catch(() => {})));
         console.log(`[SCHEDULER] ⚠️ ${forbiddenGrupos.length} grupo(s) desativado(s): ${forbiddenGrupos.map(g => g.name).join(', ')}`);
       }
 

@@ -4,10 +4,11 @@ const { getState, getSock, isConnected, initWA, disconnect } = require('../utils
 const { getScheduleState, getConfig }  = require('../utils/storage');
 
 // GET /api/status — público, usado pelo site para mostrar conexão
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   const s   = getState();
-  const cfg = getConfig();
   const sch = getScheduleState();
+  let cfg = {};
+  try { cfg = await getConfig(); } catch (_) {}
 
   res.json({
     success:   true,

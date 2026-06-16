@@ -132,7 +132,7 @@ async function enviarParaGrupos(template, grupos, config, isCancelado = () => fa
       groupJid:     grupos[i].jid,
       groupName:    grupos[i].name,
       status:       forbiddenGrupos.includes(grupos[i]) ? 'failed' : 'success',
-    });
+    }).catch(err => console.error('[HISTORY] Erro ao salvar:', err.message));
 
     // Delay entre grupos
     if (i < grupos.length - 1) {
