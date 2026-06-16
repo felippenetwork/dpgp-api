@@ -15,9 +15,16 @@ function getDB() {
 
 // ── Mapeamento DB ↔ JS ────────────────────────────────────────────────────────
 function rowToTemplate(r) {
+  let mediaUrls = [];
+  try {
+    const parsed = JSON.parse(r.media_url || '[]');
+    mediaUrls = Array.isArray(parsed) ? parsed : (r.media_url ? [r.media_url] : []);
+  } catch {
+    mediaUrls = r.media_url ? [r.media_url] : [];
+  }
   return {
     id: r.id, name: r.name || '', type: r.type || 'text',
-    content: r.content || '', mediaUrl: r.media_url || '',
+    content: r.content || '', mediaUrls, mediaUrl: mediaUrls[0] || '',
     active: r.active !== false,
   };
 }
@@ -36,10 +43,14 @@ async function saveTemplates(arr) {
   const db = getDB();
   await db.from('templates').delete().gte('id', '');
   if (arr.length) {
-    const { error } = await db.from('templates').insert(arr.map(t => ({
-      id: t.id, name: t.name || '', type: t.type || 'text',
-      content: t.content || '', media_url: t.mediaUrl || '', active: t.active !== false,
-    })));
+    const { error } = await db.from('templates').insert(arr.map(t => {
+      const urls = Array.isArray(t.mediaUrls) && t.mediaUrls.length ? t.mediaUrls : (t.mediaUrl ? [t.mediaUrl] : []);
+      return {
+        id: t.id, name: t.name || '', type: t.type || 'text',
+        content: t.content || '', media_url: urls.length ? JSON.stringify(urls) : '',
+        active: t.active !== false,
+      };
+    }));
     if (error) throw error;
   }
 }

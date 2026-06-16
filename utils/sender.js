@@ -58,14 +58,20 @@ async function enviarTemplate(sock, template, grupo) {
       });
       break;
 
-    case 'image':
-      if (!template.mediaUrl) throw new Error('mediaUrl não definida para imagem');
-      await sock.sendMessage(jid, {
-        image:   { url: template.mediaUrl },
-        caption: texto || undefined,
-        ...(mentions.length && { mentions }),
-      });
+    case 'image': {
+      const imgUrls = Array.isArray(template.mediaUrls) && template.mediaUrls.length
+        ? template.mediaUrls : (template.mediaUrl ? [template.mediaUrl] : []);
+      if (!imgUrls.length) throw new Error('mediaUrl não definida para imagem');
+      for (let mi = 0; mi < imgUrls.length; mi++) {
+        await sock.sendMessage(jid, {
+          image:   { url: imgUrls[mi] },
+          caption: mi === 0 ? (texto || undefined) : undefined,
+          ...(mi === 0 && mentions.length ? { mentions } : {}),
+        });
+        if (mi < imgUrls.length - 1) await sleep(1500);
+      }
       break;
+    }
 
     case 'video':
       if (!template.mediaUrl) throw new Error('mediaUrl não definida para vídeo');
