@@ -10,7 +10,13 @@ const pino   = require('pino');
 const qrcode = require('qrcode');
 const path   = require('path');
 
+const { getConfig } = require('./storage');
+
 const AUTH_DIR = path.join(__dirname, '..', 'auth_info');
+
+// Cooldown de ausência por contato (memória — reset ao reiniciar)
+const ausenciaCooldown = new Map();
+const COOLDOWN_MS = 60 * 60 * 1000; // 1h por contato
 
 const state = {
   connected: false,
@@ -67,6 +73,34 @@ async function initWA() {
     state.sock = sock;
 
     sock.ev.on('creds.update', saveCreds);
+
+    // ── Mensagem de ausência ──────────────────────────────────────────────────
+    sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (type !== 'notify') return;
+      for (const msg of messages) {
+        if (msg.key.fromMe) continue;
+        const jid = msg.key.remoteJid;
+        // só mensagens diretas (não grupos, não status)
+        if (!jid || jid.endsWith('@g.us') || jid === 'status@broadcast') continue;
+        if (!msg.message) continue;
+
+        const cfg = getConfig();
+        if (!cfg.ausenciaAtivo || !cfg.ausenciaMensagem?.trim()) continue;
+
+        // cooldown: 1 resposta por contato por hora
+        const ultimo = ausenciaCooldown.get(jid) || 0;
+        if (Date.now() - ultimo < COOLDOWN_MS) continue;
+        ausenciaCooldown.set(jid, Date.now());
+
+        try {
+          await new Promise(r => setTimeout(r, 1500 + Math.random() * 2000));
+          await sock.sendMessage(jid, { text: cfg.ausenciaMensagem.trim() });
+          console.log(`[AUSÊNCIA] Auto-reply enviado para ${jid}`);
+        } catch (err) {
+          console.error('[AUSÊNCIA] Erro ao enviar:', err.message);
+        }
+      }
+    });
 
     sock.ev.on('connection.update', async ({ connection, lastDisconnect, qr }) => {
       if (qr) {
