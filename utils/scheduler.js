@@ -157,14 +157,14 @@ async function verificarDisparo() {
           ultimaDataReset: dataStr,
           ultimoDisparo:   timestamp.toISOString(),
         });
-        console.log(`[SCHEDULER] ✅ Template #${template.id} enviado. Hoje: ${postagensFeitasHoje}/${config.postagensPorDia} | Fila restante: ${filaEmbaralhada.length}`);
+        console.log(`[SCHEDULER] ✅ Template #${template.id} enviado. Hoje: ${postagensFeitasHoje}/${config.postagensPorDia} | Fila restante: ${filaIds.length}`);
       }
 
     } catch (err) {
       // Reinsere na fila se não foi cancelado
       if (!cancelado) {
-        const ainda = storage.getTemplates().find(t => t.id === template.id);
-        if (ainda) filaEmbaralhada.unshift(template);
+        filaIds.unshift(template.id);
+        salvarFila();
       }
       console.error('[SCHEDULER ERRO] Envio falhou, tentará no próximo ciclo:', err.message);
     } finally {
