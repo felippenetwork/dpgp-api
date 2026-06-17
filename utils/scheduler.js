@@ -6,7 +6,7 @@ let sockRef       = null;
 let sockConectado = false;
 let cronIniciado  = false;
 let emExecucao    = false;
-let filaEmbaralhada      = [];
+let filaIds              = []; // IDs dos templates na ordem embaralhada
 let _cancelarEnvioAtual  = null;
 
 function embaralhar(arr) {
@@ -18,17 +18,30 @@ function embaralhar(arr) {
   return copia;
 }
 
-function proximoTemplate(templates) {
-  if (filaEmbaralhada.length === 0) {
-    filaEmbaralhada = embaralhar(templates);
-    console.log('[SCHEDULER] 🔀 Novo ciclo — templates embaralhados.');
-  }
-  return filaEmbaralhada.shift();
+function salvarFila() {
+  const estado = storage.getScheduleState();
+  storage.saveScheduleState({ ...estado, filaIds });
 }
 
-// Limpa a fila e cancela envio em andamento (igual ao bot)
+function proximoTemplate(templates) {
+  const idsAtivos = new Set(templates.map(t => t.id));
+
+  // Remove da fila templates que foram deletados/desativados
+  filaIds = filaIds.filter(id => idsAtivos.has(id));
+
+  if (filaIds.length === 0) {
+    filaIds = embaralhar([...idsAtivos]);
+    console.log(`[SCHEDULER] 🔀 Novo ciclo — ${filaIds.length} templates embaralhados.`);
+  }
+
+  const id = filaIds.shift();
+  salvarFila();
+  return templates.find(t => t.id === id) || null;
+}
+
 function resetarFila() {
-  filaEmbaralhada = [];
+  filaIds = [];
+  salvarFila();
   if (_cancelarEnvioAtual) _cancelarEnvioAtual();
   console.log('[SCHEDULER] 🔄 Fila resetada.');
 }
@@ -170,6 +183,12 @@ function iniciarScheduler(sock) {
   sockRef       = sock;
   sockConectado = true;
   if (!cronIniciado) {
+    // Restaura fila salva
+    const estado = storage.getScheduleState();
+    filaIds = Array.isArray(estado.filaIds) ? estado.filaIds : [];
+    if (filaIds.length > 0) {
+      console.log(`[SCHEDULER] 📋 Fila restaurada: ${filaIds.length} template(s) restantes no ciclo.`);
+    }
     cron.schedule('*/2 * * * *', verificarDisparo);
     agendarPulsosPresenca();
     cronIniciado = true;
